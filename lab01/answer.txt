@@ -9,6 +9,8 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+
+
 Q2: Set the compilation flag to -O0 -std=c++17. What is the generated assembly?
 
 add(int, int):
@@ -40,4 +42,89 @@ main:
         leave
         ret
 
+
+
+Q3: Explain the generated assembly. (write a line by line explanation in your text file containing your answers). You can ignore anything that says OFFSET FLAT: (some label), this is just a way to refer to a string resource in a program.
+
+add(int, int):
+//when the add() function is called, push the basic pointer to the stack (preparation)
+        push    rbp
+//rewrite the base pointer with the address of the stack pointer (which always points to the top of the call stack -- the next data/address that the function is going to access later) to remember where the address -- on RAM it starts from when the add() function is called)
+        mov     rbp, rsp
+//first we are making room for the second argument with 4*8bits = 32bits (for integer) relatively lower than the current rbp, read a doble word (2*16 = 32bits) data from edi and save it to the reserved room
+        mov     DWORD PTR [rbp-4], edi	
+//we do the same thing for the first integer argument, make another room of 32bits at lower address, read the 32-bit data from esi and save it to the reserved room
+        mov     DWORD PTR [rbp-8], esi
+//then we pass the data of the second argument to the edx register, ready for further manipulation
+        mov     edx, DWORD PTR [rbp-4]
+//also, we pass the data of the first argument to the eax register, ready for further manipulation
+        mov     eax, DWORD PTR [rbp-8]
+//add the data at edx to eax directly (which means the former data at eax was replaced by edx+eax)
+        add     eax, edx
+//the add() function was done, pop the current rbp, then the rbp now points to the address it points before add() function was called
+        pop     rbp
+//return
+        ret
+
+.LC0:
+//the label that is passed into the printf function
+        .string "%d\n"
+
+main:
+//push the base pointer to the stack as the main() function is called
+        push    rbp
+//rewrite the base pointer with the current address of the stack pointer
+        mov     rbp, rsp
+//reserve room for arguments that the main() function is going to use, and also all of the functions that it is goint to called inside it (here, only one add() function). So it will be 2*32bits for add(), and another 2*32 bits for the integers before passing them into the add as arguments -- which is 128bits/8 = 16Bytes in total (this is where rsp-16 comes from).
+        sub     rsp, 16
+//read the double word (16*2 = 32bits) data from edi and pass it to the reserved memory starts from the address of [rbp-4]
+        mov     DWORD PTR [rbp-4], edi
+//read the quad word (16*4 = 64bits) data from rsi and pass it to the reserved memory starts from the address of [rbp-16]
+        mov     QWORD PTR [rbp-16], rsi
+//rewrite the data of the current esi with 3 (prepare for passsing the second argument)
+        mov     esi, 3
+//rewrite the data of the current edi with 1 (prepare for passsing the first argument)
+        mov     edi, 1
+//call the add() function -- and do what previously described
+        call    add(int, int)
+//after add() done the calculation, it's return value is store in eax(32bits). Now we pass it into esi for further manipulation
+        mov     esi, eax
+//this line is preparing for passing the string as parameter to the printf() function with a label that refers to the original source
+        mov     edi, OFFSET FLAT:.LC0
+//before printf() is called, eax is expected to hold an argument that printf() is going to use -- the number of vector register that was used (which is 0 in this case)
+        mov     eax, 0
+//call the printf() function
+        call    printf
+//preparing for returning value when the main() ends
+        mov     eax, 0
+//reach the end of the function, release the stack frame
+        leave
+//return value from eax for main()
+        ret
+
+
+
+Q4: Change the compilation flag to -O3 -std=c++17. What is the generated assembly?
+
+add(int, int):
+        lea     eax, [rdi+rsi]
+        ret
+.LC0:
+        .string "%d\n"
+main:
+        sub     rsp, 8
+        mov     esi, 4
+        mov     edi, OFFSET FLAT:.LC0
+        xor     eax, eax
+        call    printf
+        xor     eax, eax
+        add     rsp, 8
+        ret
+
+
+Q5: Why did the generated assembly change, and how does it relate to the -O3 flag? 
+
+The assembly chaged because of the optimization with a different optimization flag. It took away the non-neccessary memory space or moves. 
+Because -O0 stands for disabling all optimizations. With an 'O3' flag, the target program might take longer time and more memory to compile, but the highest level of optmization will improve the running efficiency of it after it is compiled (comparing to the 'O0' ones).
+But also, it makes it harder to debug just looking at the assembly with a higher level optimization flag.
 
