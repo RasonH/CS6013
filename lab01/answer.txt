@@ -1,0 +1,43 @@
+Q1: Write a c++ program to add two numbers of the same type.
+
+#include <cstdio>
+int add(int a, int b){
+    return a + b;
+}
+int main(int argc, char *argv[]){
+    printf("%d\n", add(1,3));
+    return 0;
+}
+
+Q2: Set the compilation flag to -O0 -std=c++17. What is the generated assembly?
+
+add(int, int):
+        push    rbp
+        mov     rbp, rsp
+        mov     DWORD PTR [rbp-4], edi
+        mov     DWORD PTR [rbp-8], esi
+        mov     edx, DWORD PTR [rbp-4]
+        mov     eax, DWORD PTR [rbp-8]
+        add     eax, edx
+        pop     rbp
+        ret
+.LC0:
+        .string "%d\n"
+main:
+        push    rbp
+        mov     rbp, rsp
+        sub     rsp, 16
+        mov     DWORD PTR [rbp-4], edi
+        mov     QWORD PTR [rbp-16], rsi
+        mov     esi, 3
+        mov     edi, 1
+        call    add(int, int)
+        mov     esi, eax
+        mov     edi, OFFSET FLAT:.LC0
+        mov     eax, 0
+        call    printf
+        mov     eax, 0
+        leave
+        ret
+
+
