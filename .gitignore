@@ -34,3 +34,6 @@
 # Others
 *.json
 *.zip
+*.DS_Store
+*.swo
+*.swp
