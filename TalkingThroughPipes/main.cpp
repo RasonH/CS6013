@@ -9,6 +9,7 @@ int main(int argc, char* argv[]) {
     // check for correct command line argument input
     if(argc != 2){
         std::cerr << "No message passed. Correct usage: ./<programName> <message>." << std::endl;
+        exit(1);
     }
 
     // initialize pipe, pipe_fd[0] for reading, fd[1] for writing
