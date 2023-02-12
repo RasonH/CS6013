@@ -37,3 +37,6 @@
 *.DS_Store
 *.swo
 *.swp
+*/cmake-build-debug
+*/CMakeListx.txt
+*/.idea
