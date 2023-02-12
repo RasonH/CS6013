@@ -38,5 +38,5 @@
 *.swo
 *.swp
 */cmake-build-debug
-*/CMakeListx.txt
+*/CMakeLists.txt
 */.idea
