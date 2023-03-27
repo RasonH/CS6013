@@ -8,7 +8,7 @@ all:
 malloc: $(OBJS)
 	$(CXX) $(OBJS) -o malloc
 
-main.o: main.cpp MyMalloc.h
+main.o: main.cpp
 	$(CXX) $(CFLAGS) -c main.cpp
 
 myMalloc.o: MyMalloc.cpp MyMalloc.h
