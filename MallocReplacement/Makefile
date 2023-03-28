@@ -1,9 +1,10 @@
 CXX = c++
 CFLAGS = -std=c++17
-OBJS = MyMalloc.o HashTable.o main.o
+OBJS = Allocator.o MyHashTable.o main.o
 
 all:
 	make malloc
+	./malloc
 
 malloc: $(OBJS)
 	$(CXX) $(OBJS) -o malloc
@@ -11,11 +12,11 @@ malloc: $(OBJS)
 main.o: main.cpp
 	$(CXX) $(CFLAGS) -c main.cpp
 
-MyMalloc.o: MyMalloc.cpp MyMalloc.h
-	$(CXX) $(CFLAGS) -c MyMalloc.cpp
+Allocator.o: Allocator.cpp Allocator.h
+	$(CXX) $(CFLAGS) -c Allocator.cpp
 
-HashTable.o: HashTable.cpp HashTable.h
-	$(CXX) $(CFLAGS) -c HashTable.cpp
+MyHashTable.o: MyHashTable.cpp MyHashTable.h
+	$(CXX) $(CFLAGS) -c MyHashTable.cpp
 
 .PHONY:clean
 clean:

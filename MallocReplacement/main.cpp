@@ -1,77 +1,116 @@
 #include <vector>
-#include <iostream>
-#include "MyMalloc.h"
-#include <chrono>
+#include "Allocator.h"
 
-int main(int argc, const char * argv[]) {
-	// insert code here...
+int main() {
+	// For my assert test, I tested the growing size, lazy delete, deallocating and to see if using for loop to allocate would success and delete all the addresses afterwards.
+	Allocator allocator, allocator1, allocator2;
+	allocator.allocate(100);
+	//Testing size increasing
+	assert(allocator.alloc_table_.table_size_ == 1);
+	assert(allocator.alloc_table_.capacity_ == 11);
 
-//    //Begining of the Test:
-//    MallocReplace myMalloc;
-//    //vector:
-//    std::vector<void*> vector;
+
+	// Testing growing size. If the size >= 0.5 then grow size
+	for (int i = 0; i < 6; i++) {
+		allocator.allocate(100 + i);
+	}
+	assert(allocator.alloc_table_.table_size_ == 7);
+	assert(allocator.alloc_table_.capacity_ == 22);
+//	for (int i = 0; i < allocator.alloc_table_.capacity_; i++){
+//		if(!allocator.alloc_table_.table_[i]->has_deleted_){
+//			allocator.deallocate(allocator.alloc_table_.table_[i]->pointer_);
+//		}
+//	}
 //
-//    // to allocate the pointers:
-//    for(int i = 0; i < 100; i++) {
-//        void* pointer = myMalloc.allocate(1);
-//        vector.push_back(pointer); // store all the pointer in the vector
-//    }
-//    // to deallocate pointers:
-//    for(int i = 0; i < vector.size(); i++){
-//        //
-//        myMalloc.deallocate(vector[i]);
-//    }
+	// Testing deallocate
+	void *addr0 = allocator1.allocate(100);
+	void *addr1 = allocator1.allocate(101);
+	void *addr2 = allocator1.allocate(102);
+	void *addr3 = allocator1.allocate(103);
+	void *addr4 = allocator1.allocate(104);
+	void *addr5 = allocator1.allocate(105);
 
-	// This criterion is linked to a Learning Outcometesting and benchmarking code:
-	//timing:
-	MyMalloc myMalloc2;
-	std::vector<int> vector2;
-	for(int i =0; i< 10000; i++){
-		vector2.push_back(rand() % 10000 + 1);
+	// When deallocate, it will check if unmap return 0 or -1.
+	allocator1.deallocate(addr0);
+	allocator1.deallocate(addr2);
+	allocator1.deallocate(addr4);
+	assert(allocator1.alloc_table_.table_size_ == 3);
+
+	// Print table and can see that remove index member variable is set to 1 which is true, meaning lazy delete success
+	std::cout << "---------------------------------" << std::endl;
+	allocator1.alloc_table_.print();
+	std::cout << "---------------------------------" << std::endl;
+	allocator1.deallocate(addr1);
+	allocator1.deallocate(addr3);
+	allocator1.deallocate(addr5);
+	std::cout << "---------------------------------" << std::endl;
+	allocator1.alloc_table_.print();
+	std::cout << "---------------------------------" << std::endl;
+
+	void *arr[10];
+	for (int i = 0; i < 7; ++i) {
+		arr[i] = allocator2.allocate(100);
 	}
 
-	std::chrono::time_point<std::chrono::system_clock> start, end; // timing start to end
-	std::chrono::duration<double> durations; // to time a period of time
-	std::vector<void*> myAllocator;
-
-	// timing my own malloc:
-	start = std::chrono::system_clock::now();// initialize starting time
-	for(int i = 0; i < 10000; i ++){
-		void* pointer = myMalloc2.allocate(vector2[i]);
-		myAllocator.push_back(pointer); // allocate pointer into the myAllocator
-
+	for (int i = 0; i < 7; ++i) {
+		allocator2.deallocate(arr[i]);
 	}
-	// deAllocate:
-	for(int i = 0; i < 10000; i++){
-		myMalloc2.deallocate(myAllocator[i]);
-
+	// Check if the item in the array are all lazy deleted
+	for (int i = 0; i < allocator2.alloc_table_.capacity_; ++i) {
+		if (allocator2.alloc_table_.table_[i] != nullptr) assert(allocator2.alloc_table_.table_[i]->has_deleted_);
 	}
-	//end time
-	end = std::chrono::system_clock::now();// initialize end time
-	durations = end - start;
-	std::cout<< "my own Malloc running time: " << durations.count() <<std::endl; // to get malloc running time
+	assert(allocator2.alloc_table_.table_size_ == 0);
 
-	//Timing builtin Malloc:
-	std::vector<void*> buildingAllocator;
-	start = std::chrono::system_clock::now();// initialize starting time
-	for(int i = 0; i < 10000; i++){
-		void* pointer = malloc(vector2[i]);
-		buildingAllocator.push_back(pointer);
 
+	// Time tests for the allocator and builtin functions
+	// test by directly recording the custom allocator time and the builtin function time
+	std::cout << "---------------------------------" << std::endl;
+	constexpr size_t NUM_ALLOCS = 100000;
+	constexpr size_t ALLOC_SIZE = 32;
+
+	std::vector<void*> malloc_ptrs;
+	std::vector<void*> alloc_ptrs;
+	std::cout << "Time test:" << std::endl;
+	// Benchmark malloc
+	auto start = std::chrono::high_resolution_clock::now();
+	for (size_t i = 0; i < NUM_ALLOCS; i++) {
+		void* ptr = std::malloc(ALLOC_SIZE);
+		malloc_ptrs.push_back(ptr);
 	}
-	// free malloc:
-	for(int i = 0; i < 10000; i ++){
-		free(buildingAllocator[i]);
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double, std::milli> malloc_time = end - start;
+	std::cout << "Time taken by malloc: " << malloc_time.count() << " ms" << std::endl;
 
+	// Free memory allocated by free
+	start = std::chrono::high_resolution_clock::now();
+	for (void* ptr : malloc_ptrs) {
+		std::free(ptr);
 	}
+	end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double, std::milli> free_time = end - start;
+	std::cout << "Time taken by delete: " << malloc_time.count() << " ms" << std::endl;
 
-	end = std::chrono::system_clock::now();// initialize end time
-	durations = end - start;
-	std::cout<< "builtin malloc running time: " << durations.count() <<std::endl;
+	// test custom allocator
+	Allocator allocator3;
+	start = std::chrono::high_resolution_clock::now();
+	for (size_t i = 0; i < NUM_ALLOCS; i++) {
+		void* ptr = allocator3.allocate(ALLOC_SIZE);
+		alloc_ptrs.push_back(ptr);
+	}
+	end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double, std::milli> alloc_time = end - start;
+	std::cout << "Time taken by custom allocator: " << alloc_time.count() << " ms" << std::endl;
 
-	//-> my malloc it is slower than the builtin malloc below
-	//my own Malloc running time: 0.016135
-	//builtin malloc running time: 0.004542
+	// Free memory allocated by our custom allocator
+	start = std::chrono::high_resolution_clock::now();
+	for (void* ptr : alloc_ptrs) {
+		allocator3.deallocate(ptr);
+	}
+	end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double, std::milli> dealloc_time = end - start;
+	std::cout << "Time taken by custom delete: " << dealloc_time.count() << " ms" << std::endl;
+	std::cout << "---------------------------------" << std::endl;
 
 	return 0;
 }
+
