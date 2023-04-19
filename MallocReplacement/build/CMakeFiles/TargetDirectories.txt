@@ -1,0 +1,3 @@
+/Users/rasonhung/Study/MSD/CS6013/MallocReplacement/build/CMakeFiles/malloc.dir
+/Users/rasonhung/Study/MSD/CS6013/MallocReplacement/build/CMakeFiles/edit_cache.dir
+/Users/rasonhung/Study/MSD/CS6013/MallocReplacement/build/CMakeFiles/rebuild_cache.dir
